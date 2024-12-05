@@ -27,3 +27,12 @@ jobs:
         docker login ghcr.io -u sariandras -p ${{secrets.GHCR_TOKEN}}
         docker push ghcr.io/sariandras/azure-web-app-test:$IMAGE_TAG
         
+    - name: Deploy to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'JokeClient'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_377a1ed1af2a4d3988bfe6b6e0dd3445 }}
+        images: 'ghcr.io/sariandras/azure-web-app-test:${{ env.IMAGE_TAG}}'
+          
