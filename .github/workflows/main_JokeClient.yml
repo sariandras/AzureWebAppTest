@@ -1,0 +1,51 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - JokeClient
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to registry
+      uses: docker/login-action@v2
+      with:
+        registry: https://ghcr.io/sariandras/
+        username: ${{ secrets.AzureAppService_ContainerUsername_f19c8c64c7aa41e6a83f91eed80231dd }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_2952cf22e12444739d31913b4fa0d881 }}
+
+    - name: Build and push container image to registry
+      uses: docker/build-push-action@v3
+      with:
+        push: true
+        tags: ghcr.io/sariandras/${{ secrets.AzureAppService_ContainerUsername_f19c8c64c7aa41e6a83f91eed80231dd }}/sariandras/jokeclient:${{ github.sha }}
+        file: ./Dockerfile
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+    - name: Deploy to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'JokeClient'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_377a1ed1af2a4d3988bfe6b6e0dd3445 }}
+        images: 'ghcr.io/sariandras/${{ secrets.AzureAppService_ContainerUsername_f19c8c64c7aa41e6a83f91eed80231dd }}/sariandras/jokeclient:${{ github.sha }}'
